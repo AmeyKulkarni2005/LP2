@@ -1,0 +1,149 @@
+# 🌐 Static Website Deployment using Nginx on Azure VM
+
+## 1. Azure Configuration
+
+* Go to VM → Networking
+* Add inbound rule:
+  * Protocol: TCP
+  * Port: **80 (HTTP)**
+* Note Public IP
+
+---
+
+## 2. Server Setup
+
+### A. Connect to VM
+
+```bash
+ssh azureuser@<public-ip>
+```
+
+---
+
+### B. Install & Start Nginx
+
+```bash
+sudo apt update
+sudo apt install -y nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+```
+
+---
+
+## 3. Deployment using GitHub (Actual Method Used)
+
+### A. Clone Repository
+
+```bash
+git clone <repo-link>
+cd LP2_projects/cc-static-website
+```
+
+---
+
+### ⚠️ Mistake 1 (IMPORTANT)
+
+Initially copied entire repo:
+
+```bash
+sudo cp -r * /var/www/html/
+```
+
+❌ Result:
+
+* No `index.html` in root
+* Got **403 Forbidden**
+
+---
+
+### ✅ Fix
+
+Copy only website folder:
+
+```bash
+sudo rm -rf /var/www/html/*
+sudo cp -r website/* /var/www/html/
+```
+
+---
+
+## ⚠️ Mistake 2 (Critical)
+
+Accidentally deleted full directory:
+
+```bash
+sudo rm -rf /var/www/html/
+```
+
+❌ Error:
+
+```
+No such file or directory
+```
+
+---
+
+### ✅ Fix
+
+Recreate directory:
+
+```bash
+sudo mkdir -p /var/www/html
+```
+
+---
+
+## ⚠️ Mistake 3 (Permissions Issue)
+
+Got:
+
+```
+403 Forbidden
+```
+
+---
+
+### ✅ Fix
+
+```bash
+sudo chmod -R 755 /var/www/html
+sudo chown -R www-data:www-data /var/www/html
+```
+
+---
+
+## 4. Restart Nginx
+
+```bash
+sudo systemctl restart nginx
+```
+
+---
+
+## 5. Verification
+
+Open:
+
+```
+http://<public-ip>
+```
+
+✔ Website loads successfully
+
+---
+
+## 🧠 Key Learnings (EXAM GOLD)
+
+* Nginx serves files from `/var/www/html`
+* Must have `index.html` in root
+* Permissions must allow `www-data` access
+* Copy correct folder (not full repo)
+* Deleting directory vs contents matters (`/` vs `/*`)
+
+---
+
+## 🔥 Viva Boost Answer
+
+> “During deployment, initial errors included missing web root and permission issues causing 403 Forbidden. These were resolved by recreating the directory, correcting file placement, and setting appropriate permissions using chmod and chown.”
+ 

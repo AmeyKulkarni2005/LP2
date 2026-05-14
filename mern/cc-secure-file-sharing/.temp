@@ -1,0 +1,377 @@
+# 🔒 Secure File Sharing Between Linux Virtual Machines
+
+This practical demonstrates secure file transfer between two Linux Virtual Machines using SSH and SCP over a private network.
+
+---
+
+# 🧠 FLOW
+
+```text
+Machine-A → Configure SSH Trust → Connect to Machine-B → Transfer File → Verify
+```
+
+---
+
+# ⚙️ 1. PREREQUISITES
+
+Requirements:
+- Two Linux VMs / systems
+- Both connected to same network / VNet
+- SSH installed
+- Port 22 open
+- Both systems running
+
+Example:
+- VM-A → `10.0.0.4`
+- VM-B → `10.0.0.5`
+
+---
+
+# 🌐 2. CHECK PRIVATE IP
+
+On both systems:
+
+```bash
+hostname -I
+```
+
+Example:
+
+```text
+VM-A → 10.0.0.4
+VM-B → 10.0.0.5
+```
+
+---
+
+# 🔐 3. PEM KEY PERMISSION FIX (IMPORTANT)
+
+Some Linux systems reject SSH keys if permissions are too open.
+
+If using WSL or external storage:
+
+## Copy PEM into Linux Home Directory
+
+```bash
+cp /path/to/key.pem ~/
+cd ~
+```
+
+## Restrict Permissions
+
+```bash
+chmod 400 key.pem
+```
+
+## Connect Using SSH
+
+```bash
+ssh -i key.pem user@<PUBLIC-IP>
+```
+
+---
+
+## Why is this required?
+
+SSH requires private keys to be accessible only by the owner.
+
+If permissions are too open:
+- SSH ignores the key
+- authentication fails
+
+---
+
+# 🔑 4. GENERATE SSH KEY ON VM-A
+
+On VM-A:
+
+```bash
+ssh-keygen -t rsa -b 4096
+```
+
+Press Enter for all prompts.
+
+This creates:
+
+```text
+~/.ssh/id_rsa
+~/.ssh/id_rsa.pub
+```
+
+---
+
+# 📋 5. COPY VM-A PUBLIC KEY
+
+On VM-A:
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+Copy the complete SSH public key.
+
+---
+
+# 🖥️ 6. AUTHORIZE VM-A INSIDE VM-B
+
+Login into VM-B.
+
+Create SSH folder:
+
+```bash
+mkdir -p ~/.ssh
+```
+
+Open authorized keys file:
+
+```bash
+nano ~/.ssh/authorized_keys
+```
+
+Paste the copied public key.
+
+Save:
+```text
+CTRL + O → Enter → CTRL + X
+```
+
+---
+
+# 🔁 7. TEST PASSWORDLESS SSH
+
+From VM-A:
+
+```bash
+ssh user@10.0.0.5
+```
+
+If successful:
+- VM-A can access VM-B without password
+
+Exit VM-B:
+
+```bash
+exit
+```
+
+---
+
+# 📤 8. FILE TRANSFER (A → B)
+
+## Create Test File
+
+On VM-A:
+
+```bash
+echo "hello from vm-a" > hello.txt
+```
+
+## Transfer File
+
+```bash
+scp hello.txt user@10.0.0.5:~/hello.txt
+```
+
+---
+
+# ✅ 9. VERIFY ON VM-B
+
+Login into VM-B:
+
+```bash
+ssh user@10.0.0.5
+```
+
+Check file:
+
+```bash
+ls
+cat hello.txt
+```
+
+Expected output:
+
+```text
+hello from vm-a
+```
+
+---
+
+# 🔄 10. OPTIONAL: REVERSE TRANSFER (B → A)
+
+To allow VM-B to send files back to VM-A:
+
+---
+
+## On VM-B
+
+```bash
+ssh-keygen
+cat ~/.ssh/id_rsa.pub
+```
+
+Copy the key.
+
+---
+
+## On VM-A
+
+```bash
+nano ~/.ssh/authorized_keys
+```
+
+Paste VM-B public key.
+
+---
+
+## Transfer File (B → A)
+
+On VM-B:
+
+```bash
+echo "hello from vm-b" > yo.txt
+scp yo.txt user@10.0.0.4:~/yo.txt
+```
+
+---
+
+# 🔒 11. SECURE FOLDER (OPTIONAL)
+
+```bash
+mkdir secure_vault
+chmod 700 secure_vault
+mv hello.txt secure_vault/
+```
+
+---
+
+# 🐛 TROUBLESHOOTING & DEBUGGING
+
+| Problem | Cause | Fix |
+|---|---|---|
+| `Permission denied (publickey)` | SSH key not added correctly | Add public key into `authorized_keys` |
+| SSH asks for password repeatedly | Passwordless setup incomplete | Recheck SSH key configuration |
+| `WARNING: UNPROTECTED PRIVATE KEY FILE!` | PEM permissions too open | Run `chmod 400 key.pem` |
+| `bad permissions` on PEM key | PEM stored on external/Windows filesystem | Copy PEM to Linux home directory |
+| SSH ignores PEM key | Incorrect permissions on private key | Move key to `~` and apply `chmod 400` |
+| `No such file or directory` for PEM | Wrong PEM filename/path | Verify filename using `ls` |
+| SCP transfer fails | Wrong SCP syntax | Use `user@ip:~/file.txt` |
+| SCP creates weird filename | Missing `:` in command | Add colon after IP |
+| Reverse transfer fails | Only one-way trust configured | Add VM-B key into VM-A |
+| SSH appears stuck during password | Linux hides password typing | Type password blindly and press Enter |
+| Timeout / cannot connect | SSH service not reachable | Check port 22 and network |
+| Wrong IP used | Incorrect private IP | Verify using `hostname -I` |
+| SSH host authenticity warning | First-time connection | Type `yes` and continue |
+
+---
+
+# 🧠 IMPORTANT CONCEPTS
+
+## Public IP
+Used for:
+- external remote access
+
+## Private IP
+Used for:
+- VM ↔ VM communication inside network
+
+---
+
+# 🧠 SCP SYNTAX
+
+Correct:
+
+```bash
+scp file.txt user@ip:~/file.txt
+```
+
+Wrong:
+
+```bash
+scp file.txt user@ip
+```
+
+Without `:` it is treated as local filename.
+
+---
+
+# 🧠 VIVA QUESTIONS
+
+## Why SCP instead of FTP?
+
+SCP:
+- encrypted
+- secure
+- uses SSH
+
+FTP:
+- plain text
+- insecure without SSL/TLS
+
+---
+
+## Why use private IP?
+
+- traffic remains inside network
+- more secure
+- lower latency
+- avoids public exposure
+
+---
+
+## What is `authorized_keys`?
+
+Stores trusted public SSH keys allowed to access the system.
+
+---
+
+## What does `chmod 700` do?
+
+Only owner gets:
+- read
+- write
+- execute
+
+No permissions for others.
+
+---
+
+## What does `chmod 400` do?
+
+Owner gets:
+- read-only permission
+
+Others get:
+- no access
+
+Used to secure private SSH keys.
+
+---
+
+# ✅ FINAL RESULT
+
+If this works:
+
+```bash
+scp hello.txt user@10.0.0.5:~/hello.txt
+```
+
+and file appears on VM-B:
+
+```bash
+cat hello.txt
+```
+
+Then:
+
+```text
+SSH ✔
+Private Networking ✔
+SCP ✔
+Secure File Sharing ✔
+Linux Practical ✔
+```
+
+---
+
+*Developed for Cloud Computing / LP2 Practical Examination* 
