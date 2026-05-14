@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PICT Student Portal</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        PICT Pune
+    </header>
+    <main>
+        <h2>Welcome to the Student Portal of PICT</h2>
+        <p>Click on the chat icon to toggle the chatbot</p>
+    </main>
+
+    <button id="chat-toggle" onclick="togglechat()">💬</button>
+
+    <div id="chat-window" class="hidden">
+        <div class="chat-header">
+            <span>PICT assistant</span>
+            <button onclick="togglechat()">x</button>
+        </div>
+
+        <div id="chat-messages"></div>
+
+        <div class="chat-input-area">
+            <input id="user-input" type="text" placeholder="Ask something...">
+            <button onclick="handleSend()">Send</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
