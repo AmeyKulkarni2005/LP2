@@ -92,7 +92,7 @@ sudo nano /etc/nginx/sites-available/blog-app
 server {
     listen 80;
     server_name _;
-
+    
     # Serve React Frontend Static Files
     location / {
         root /home/azureuser_frontback/LP2/mern/mern-blog-app/frontend/dist;
@@ -122,4 +122,5 @@ sudo nginx -t
 
 # 7. Perform a hard reset clean reboot on the Nginx routing service
 sudo systemctl stop nginx
+
 sudo systemctl start nginx
